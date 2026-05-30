@@ -79,14 +79,14 @@ Optional script after install: `pwvault` (requires Python Scripts directory on `
 | Command | Purpose |
 | --- | --- |
 | `init` | Create vault (refuses if file exists) |
-| `add` | Add entry (`--generate` for password) |
+| `add` | Add entry (`--generate` for password, `--notes-prompt` for notes) |
 | `list` | Safe summaries only |
 | `get` | View entry (`--reveal`, `--details`) |
-| `update` | Partial update (`--generate`, `--password-prompt`) |
+| `update` | Partial update (`--generate`, `--password-prompt`, `--notes-prompt`) |
 | `delete` | Remove entry (`--yes` to skip prompt) |
 | `search` | Match service, username, url, notes |
 | `check` | Verify master password (no unlocked session) |
-| `lock` | Unlock briefly, then clear in-memory session |
+| `lock` | Verify the master password and exit (no session is kept) |
 | `change-password` | Rotate master password + salt |
 | `generate` | Standalone password (no vault) |
 

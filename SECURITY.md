@@ -29,6 +29,21 @@ If you discover a security concern:
 - Side-channel/timing attacks on offline unlock
 - Denial of service via very large vault files (partially bounded by schema limits)
 
+## Platform caveats
+
+- **Directory fsync on Windows.** `atomic_write` calls `os.fsync` on the parent
+  directory after `os.replace`. On POSIX this flushes the directory inode so the
+  rename survives a crash; on Windows opening a directory fd is rejected, so the
+  call silently no-ops. The `os.replace` itself remains atomic with respect to a
+  crash, but durability of the directory entry is best-effort. Treat the "partial
+  write corruption" mitigation as POSIX-only.
+- **Write-lock stale recovery on Windows.** Liveness of the PID inside a `.lock`
+  file is checked via `OpenProcess` + `GetExitCodeProcess` (see `lockfile.py`).
+  `os.kill(pid, 0)` is **not** used on Windows because it maps to
+  `TerminateProcess`, which would kill the holder. If a lock file contains an
+  unparseable PID (e.g. a partial write from a crashed acquirer), the file is
+  treated as stale and removed.
+
 ## Dependencies
 
 Cryptography is delegated to the [`cryptography`](https://pypi.org/project/cryptography/)
