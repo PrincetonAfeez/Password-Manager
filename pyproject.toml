@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-password-manager"
+version = "0.1.0"
+description = "Local encrypted password vault with a safe argparse CLI."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = [
+    "cryptography>=42,<45",
+]
+
+[project.scripts]
+pwvault = "password_manager.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-cov>=5,<7",
+    "hypothesis>=6,<7",
+    "ruff>=0.8,<1",
+    "mypy>=1.13,<2",
+    "pre-commit>=3,<5",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["password_manager*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --cov=password_manager --cov-report=term-missing --cov-fail-under=90"
+
+[tool.coverage.run]
+branch = true
+omit = ["password_manager/__main__.py"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+files = ["password_manager"]
