@@ -16,3 +16,6 @@ venv/
 
 *.pwv
 .*.lock
+
+docs/password_manager_improved_full_scope_no_django.txt
+docs/project-notes.txt
