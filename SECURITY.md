@@ -19,7 +19,12 @@ If you discover a security concern:
 - Broken authenticated encryption or KDF bypass
 - Secret leakage via default CLI output or logs
 - Vault corruption on crash during write
-- Session remaining unlocked after failed re-authentication
+- Session remaining unlocked after failed re-authentication (report regressions only)
+
+**Mitigated today:** `unlock()`, `verify_password()` / `check`, and
+`change_master_password()` call `lock()` on any re-authentication failure so an
+unlocked session never survives a wrong password (`test_vault_session.py`,
+`test_vault_complete.py`).
 - Revision/lock bypass allowing silent data loss
 
 ## Out of scope
@@ -48,7 +53,8 @@ If you discover a security concern:
 
 Cryptography is delegated to the [`cryptography`](https://pypi.org/project/cryptography/)
 package (see ADR 0001). Keep it updated via `pip install -U cryptography` in dev
-environments; CI pins `cryptography>=42,<45`.
+environments; CI and `requirements-dev.txt` use version-bounded ranges
+(`cryptography>=42,<45`). Exact pins for grading: [`requirements-lock.txt`](../requirements-lock.txt).
 
 ## Repository hygiene
 
