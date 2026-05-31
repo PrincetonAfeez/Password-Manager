@@ -43,10 +43,11 @@ web UI, browser extensions, constant-time unlock, secure string wiping in CPytho
 | R4 | Schema validation | `schema.py` | `test_serializer_schema.py`, `test_schema_limits.py` |
 | R5 | CRUD + search | `vault.py` | `test_entries.py`, `test_vault_lifecycle.py` |
 | R6 | Safe CLI | `cli.py` | `test_cli.py` |
-| R7 | Master password policy | `MIN_MASTER_PASSWORD_LENGTH` | `test_schema_limits.py`, `test_cli.py` |
-| R8 | Session safety | `lock()`, failed `unlock` | `test_vault_session.py` |
+| R7 | Master password policy | `vault.py` (`MIN_MASTER_PASSWORD_LENGTH`) | `test_schema_limits.py`, `test_cli.py` |
+| R8 | Session safety | `lock()`, failed `unlock` / `verify_password` / `change_master_password` | `test_vault_session.py`, `test_vault_complete.py` |
 | R9 | Concurrent write detection | `revision`, `VaultConflictError` | `test_revision.py` |
 | R10 | Golden sample vault | `tests/fixtures/golden.pwv` | `test_golden_vault.py` |
+| R11 | KDF cost upgrade on rotation | `Vault.change_master_password(..., kdf_params=)` | `test_vault_complete.py` (library API; not exposed in CLI) |
 
 ## Test strategy
 
@@ -54,7 +55,8 @@ web UI, browser extensions, constant-time unlock, secure string wiping in CPytho
 - **Integration:** full CLI flows with mocked `getpass`.
 - **Security:** single-module `cryptography` import rule.
 - **Property:** header/body JSON round-trip (Hypothesis).
-- **CI:** Python 3.10 & 3.12 on Ubuntu, Windows, and macOS; ruff, mypy, pytest with ≥90% coverage (enforced by `--cov-fail-under=90`).
+- **Concurrency:** write-lock stale recovery and cross-thread blocking (`test_lockfile_complete.py`); Windows-specific PID liveness paths run on the **Windows** CI matrix job (`windows-latest`).
+- **CI:** Python 3.10 & 3.12 on Ubuntu, Windows, and macOS; ruff, mypy, pytest with ≥90% coverage; pre-commit; lockfile install job on 3.12.
 
 ## Limitations (honest)
 
@@ -63,6 +65,12 @@ web UI, browser extensions, constant-time unlock, secure string wiping in CPytho
 3. Master password strength is length-only (≥12); no zxcvbn.
 4. Best-effort lock file, not a cluster-wide distributed lock.
 5. In-memory secrets may remain in process RAM until GC.
+6. **`initialize()` leaves an unlocked session** — library callers should call `lock()` when done.
+7. **Platform caveats (Windows):**
+   - Directory fsync after `os.replace` is a no-op on Windows; atomic rename still holds, but directory-entry durability is POSIX-stronger (see `SECURITY.md`).
+   - Write-lock stale recovery uses `OpenProcess` + exit code, not `os.kill(pid, 0)` (which would terminate the holder on Windows).
+   - Unparseable PID text in a lock file is treated as stale and removed.
+8. **`verify_password()` while already unlocked** validates against disk but does not refresh in-memory entries; re-`unlock` after external writes (see `ARCHITECTURE.md`).
 
 ## Future work (not required for scope)
 
@@ -74,6 +82,10 @@ web UI, browser extensions, constant-time unlock, secure string wiping in CPytho
 
 ```powershell
 python -m pip install -e ".[dev]"
+# Or, for exact dependency pins (matches CI lockfile job on Python 3.12):
+# python -m pip install -r requirements-lock.txt
+# python -m pip install -e .
+
 python scripts/generate_golden_vault.py
 python -m pytest
 python -m password_manager --vault tests/fixtures/golden.pwv check
