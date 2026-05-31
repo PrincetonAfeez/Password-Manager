@@ -9,11 +9,25 @@ pre-commit install
 
 ## Checks before a PR or submission
 
+These run in CI (matrix on 3.10/3.12 × Ubuntu/Windows/macOS, plus pre-commit and lockfile jobs):
+
 ```powershell
 ruff check password_manager tests
 mypy password_manager
 python -m pytest
+pre-commit run --all-files
 ```
+
+## Regenerating the lockfile
+
+Use Python 3.10 or 3.12 (matches CI). From a clean venv:
+
+```powershell
+python -m pip install pip-tools
+python -m piptools compile requirements-dev.txt -o requirements-lock.txt --strip-extras
+```
+
+Then run `python -m pytest` and commit `requirements-lock.txt`.
 
 ## Regenerating the golden vault fixture
 
