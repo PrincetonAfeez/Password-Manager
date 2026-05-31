@@ -6,11 +6,13 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.hypothesis/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 .venv/
+.venv-lock/
 venv/
 .env
 
