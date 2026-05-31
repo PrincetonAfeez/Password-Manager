@@ -82,8 +82,13 @@ sequenceDiagram
 ## Secrets in memory
 
 - Master and entry passwords exist as Python `str` in the CLI and `Vault` during a session.
+- `initialize()` leaves an unlocked session; library callers that do not need one should call `lock()`.
 - `lock()` clears references to header, body, and key; CPython does not guarantee wiping.
 - `verify_password()` / `check` decrypt on disk without loading a session when the vault was locked.
+  On failure, any unlocked session is cleared (same fail-closed rule as `unlock()`).
+  When already unlocked, a successful check validates the password against disk but does
+  not refresh in-memory entries (re-`unlock` after external writes).
+- Failed `change_master_password()` re-authentication clears any unlocked session.
 
 ## Concurrent access
 
@@ -91,6 +96,13 @@ sequenceDiagram
 2. **Header `revision`** — incremented on every persist; stale in-memory copies get `VaultConflictError`.
 
 See [ADR 0009](adr/0009-concurrent-writer-policy.md).
+
+## Library usage
+
+`Entry` and `VaultHeader` are frozen dataclasses. `get_entry()` and
+`find_matching_entries()` return defensive copies. To change an entry, call
+`update_entry(id, EntryUpdate(...))` — mutating a returned object has no effect
+on the vault.
 
 ## Related documents
 
