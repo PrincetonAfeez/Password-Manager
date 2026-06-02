@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vault-entry.schema.json",
+  "title": "Password Manager Vault Entry",
+  "description": "One decrypted password entry inside a vault body.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "service",
+    "username",
+    "password",
+    "url",
+    "notes",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique entry identifier."
+    },
+    "service": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "\\S",
+      "description": "Service or account name. Whitespace-only values are invalid."
+    },
+    "username": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "\\S",
+      "description": "Username, email, or login identifier. Whitespace-only values are invalid."
+    },
+    "password": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Stored password or secret text."
+    },
+    "url": {
+      "type": "string",
+      "maxLength": 2048,
+      "default": "",
+      "description": "Optional URL stored as text."
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 65536,
+      "default": "",
+      "description": "Optional notes stored as text."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timezone-aware ISO 8601 creation timestamp."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timezone-aware ISO 8601 last update timestamp."
+    }
+  }
+}

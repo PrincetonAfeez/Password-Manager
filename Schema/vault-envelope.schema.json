@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vault-envelope.schema.json",
+  "title": "Password Manager Encrypted Vault Envelope",
+  "description": "Top-level JSON object stored in a .pwv vault file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "vault-header.schema.json"
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 52428800,
+      "pattern": "^[A-Za-z0-9_-]+={0,2}$",
+      "description": "Encrypted Fernet token as ASCII text. Authenticity requires decryption."
+    }
+  }
+}

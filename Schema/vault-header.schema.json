@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vault-header.schema.json",
+  "title": "Password Manager Vault Header",
+  "description": "Public metadata stored in a Password-Manager vault envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "kdf",
+    "kdf_params",
+    "salt",
+    "cipher",
+    "revision",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "py-password-vault",
+      "description": "Vault format identifier."
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Vault header format version."
+    },
+    "kdf": {
+      "type": "string",
+      "const": "scrypt",
+      "description": "Key derivation function identifier."
+    },
+    "kdf_params": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "length",
+        "n",
+        "r",
+        "p"
+      ],
+      "properties": {
+        "length": {
+          "type": "integer",
+          "const": 32,
+          "description": "Derived key length in bytes."
+        },
+        "n": {
+          "type": "integer",
+          "enum": [
+            16384,
+            32768,
+            65536,
+            131072,
+            262144
+          ],
+          "description": "scrypt N cost parameter; must be a supported power of two."
+        },
+        "r": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "scrypt block size parameter."
+        },
+        "p": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "scrypt parallelization parameter."
+        }
+      }
+    },
+    "salt": {
+      "type": "string",
+      "minLength": 24,
+      "maxLength": 88,
+      "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+      "contentEncoding": "base64",
+      "description": "Base64-encoded salt; decoded size should be 16 to 64 bytes."
+    },
+    "cipher": {
+      "type": "string",
+      "const": "fernet",
+      "description": "Cipher suite identifier."
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic vault revision used for conflict detection."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timezone-aware ISO 8601 creation timestamp."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timezone-aware ISO 8601 last update timestamp."
+    }
+  }
+}

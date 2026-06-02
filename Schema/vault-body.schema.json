@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vault-body.schema.json",
+  "title": "Password Manager Decrypted Vault Body",
+  "description": "Plaintext vault body after successful decryption and before encryption.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "entries"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Decrypted body format version."
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "vault-entry.schema.json"
+      },
+      "description": "Password entries. Entry ID uniqueness is enforced by application code."
+    }
+  }
+}

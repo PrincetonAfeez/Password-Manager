@@ -1,0 +1,29 @@
+{
+  "name": "Password-Manager Schema Package",
+  "repository": "PrincetonAfeez/Password-Manager",
+  "generated_on": "2026-06-01",
+  "pushed_to_github": false,
+  "schema_dialect": "JSON Schema Draft 2020-12",
+  "files": [
+    "README.md",
+    "vault-envelope.schema.json",
+    "vault-header.schema.json",
+    "vault-body.schema.json",
+    "vault-entry.schema.json",
+    "examples/sample-vault-envelope.json",
+    "examples/sample-vault-body.json"
+  ],
+  "validation_scope": {
+    "vault-envelope.schema.json": "Validates the encrypted vault file envelope.",
+    "vault-header.schema.json": "Validates public vault metadata.",
+    "vault-body.schema.json": "Validates decrypted plaintext body data.",
+    "vault-entry.schema.json": "Validates one decrypted password entry."
+  },
+  "application_owned_rules": [
+    "Fernet decryptability and authentication",
+    "updated_at must not precede created_at",
+    "entry IDs must be unique within a vault",
+    "decoded salt byte length must be between 16 and 64 bytes",
+    "decrypted plaintext body must not exceed 10 MiB"
+  ]
+}
