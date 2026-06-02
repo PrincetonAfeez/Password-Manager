@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import logging
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from . import __version__
 from .errors import AmbiguousEntryError, VaultError
-from .generator import generate_password
+from .generator import MIN_PASSWORD_LENGTH, generate_password
+
+logger = logging.getLogger(__name__)
 from .lockfile import WriteLock
 from .models import EntryCreate, EntrySummary, EntryUpdate
 from .vault import Vault
@@ -78,11 +81,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="prompt for notes (input is hidden — notes may contain secrets)",
     )
-    update_parser.add_argument("--password-prompt", action="store_true")
-    _add_generator_options(update_parser, for_entry_commands=True)
+    update_password_group = update_parser.add_mutually_exclusive_group()
+    update_password_group.add_argument("--password-prompt", action="store_true")
+    _add_generator_options(
+        update_parser,
+        for_entry_commands=True,
+        password_group=update_password_group,
+    )
 
     search_parser = subparsers.add_parser("search", help="search entries")
-    search_parser.add_argument("query")
+    search_parser.add_argument("query", type=_non_empty_search_query)
 
     subparsers.add_parser(
         "change-password",
@@ -97,6 +105,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    _validate_parsed_args(parser, args)
 
     try:
         return _dispatch(args)
@@ -104,14 +113,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("Interrupted.", file=sys.stderr)
         return 130
     except AmbiguousEntryError as exc:
+        logger.debug("ambiguous entry", exc_info=True)
         print(f"ERROR: {exc}", file=sys.stderr)
         if exc.entries:
             _print_summaries(exc.entries)
         return 1
     except VaultError as exc:
+        logger.debug("vault error", exc_info=True)
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     except ValueError as exc:
+        logger.debug("validation error", exc_info=True)
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
@@ -146,10 +158,6 @@ def _dispatch(args: argparse.Namespace) -> int:
         return 0
 
     if args.command in READ_ONLY_COMMANDS:
-        if args.command == "search" and (
-            not isinstance(args.query, str) or not args.query.strip()
-        ):
-            raise ValueError("search query must not be empty")
         password = getpass.getpass("Master password: ")
         vault = Vault(vault_path)
         vault.unlock(password)
@@ -298,9 +306,6 @@ def _entry_password_from_args(args: argparse.Namespace) -> str:
 
 
 def _updates_from_args(args: argparse.Namespace) -> EntryUpdate:
-    if args.password_prompt and args.generate:
-        raise ValueError("choose either --password-prompt or --generate, not both")
-
     password: str | None = None
     if args.password_prompt:
         password = getpass.getpass("Entry password: ")
@@ -315,15 +320,64 @@ def _updates_from_args(args: argparse.Namespace) -> EntryUpdate:
         url=args.url,
         notes=notes,
     )
-    if not updates.has_changes():
-        raise ValueError("no updates provided")
     return updates
 
 
-def _add_generator_options(parser: argparse.ArgumentParser, *, for_entry_commands: bool) -> None:
+def _non_empty_search_query(value: str) -> str:
+    if not value.strip():
+        raise argparse.ArgumentTypeError("search query must not be empty")
+    return value
+
+
+def _generator_length(value: str) -> int:
+    try:
+        length = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid int value: {value!r}") from exc
+    if length < MIN_PASSWORD_LENGTH:
+        raise argparse.ArgumentTypeError(
+            f"password length must be at least {MIN_PASSWORD_LENGTH}"
+        )
+    return length
+
+
+def _validate_parsed_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    if args.command == "update":
+        if not (
+            args.service is not None
+            or args.username is not None
+            or args.url is not None
+            or args.notes_prompt
+            or args.password_prompt
+            or args.generate
+        ):
+            parser.error("no updates provided")
+
+    if args.command == "generate" or getattr(args, "generate", False):
+        enabled_classes = sum(
+            (
+                not args.no_uppercase,
+                not args.no_lowercase,
+                not args.no_digits,
+                not args.no_symbols,
+            )
+        )
+        if enabled_classes == 0:
+            parser.error("at least one character class must be enabled")
+        if args.length < enabled_classes:
+            parser.error("password length is too short for selected character classes")
+
+
+def _add_generator_options(
+    parser: argparse.ArgumentParser,
+    *,
+    for_entry_commands: bool,
+    password_group: argparse._MutuallyExclusiveGroup | None = None,
+) -> None:
     if for_entry_commands:
         group = parser.add_argument_group("password generation (requires --generate)")
-        group.add_argument(
+        generate_target = password_group if password_group is not None else group
+        generate_target.add_argument(
             "--generate",
             action="store_true",
             help="generate the entry password instead of prompting",
@@ -334,7 +388,12 @@ def _add_generator_options(parser: argparse.ArgumentParser, *, for_entry_command
 
 
 def _add_generator_length_options(parser: argparse._ActionsContainer) -> None:
-    parser.add_argument("--length", type=int, default=20, help="generated password length")
+    parser.add_argument(
+        "--length",
+        type=_generator_length,
+        default=20,
+        help=f"generated password length (minimum {MIN_PASSWORD_LENGTH})",
+    )
     parser.add_argument("--no-uppercase", action="store_true", help="omit uppercase letters")
     parser.add_argument("--no-lowercase", action="store_true", help="omit lowercase letters")
     parser.add_argument("--no-digits", action="store_true", help="omit digits")

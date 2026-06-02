@@ -23,7 +23,6 @@ pre-commit run --all-files
 Use Python 3.10 or 3.12 (matches CI). From a clean venv:
 
 ```powershell
-python -m pip install pip-tools
 python -m piptools compile requirements-dev.txt -o requirements-lock.txt --strip-extras
 ```
 

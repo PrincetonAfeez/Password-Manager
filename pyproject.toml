@@ -24,6 +24,7 @@ dev = [
     "ruff>=0.8,<1",
     "mypy>=1.13,<2",
     "pre-commit>=3,<5",
+    "pip-tools>=7,<8",
 ]
 
 [tool.setuptools.packages.find]

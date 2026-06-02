@@ -74,29 +74,16 @@ def test_generate_from_args_defaults():
 
 
 def test_updates_from_args_conflicts():
-    args = argparse.Namespace(
-        password_prompt=True,
-        generate=True,
-        notes_prompt=False,
-        service=None,
-        username=None,
-        url=None,
-    )
-    with pytest.raises(ValueError, match="not both"):
-        cli._updates_from_args(args)
+    parser = cli.build_parser()
+    with pytest.raises(SystemExit) as exc:
+        parser.parse_args(["--vault", "v.pwv", "update", "entry", "--password-prompt", "--generate"])
+    assert exc.value.code == 2
 
 
 def test_updates_from_args_empty():
-    args = argparse.Namespace(
-        password_prompt=False,
-        generate=False,
-        notes_prompt=False,
-        service=None,
-        username=None,
-        url=None,
-    )
-    with pytest.raises(ValueError, match="no updates provided"):
-        cli._updates_from_args(args)
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--vault", "v.pwv", "update", "entry"])
+    assert exc.value.code == 2
 
 
 def test_prompt_new_master_password_mismatch(monkeypatch):

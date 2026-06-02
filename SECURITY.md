@@ -54,7 +54,7 @@ unlocked session never survives a wrong password (`test_vault_session.py`,
 Cryptography is delegated to the [`cryptography`](https://pypi.org/project/cryptography/)
 package (see ADR 0001). Keep it updated via `pip install -U cryptography` in dev
 environments; CI and `requirements-dev.txt` use version-bounded ranges
-(`cryptography>=42,<45`). Exact pins for grading: [`requirements-lock.txt`](../requirements-lock.txt).
+(`cryptography>=42,<45`). Exact pins for grading: [`requirements-lock.txt`](requirements-lock.txt).
 
 ## Repository hygiene
 

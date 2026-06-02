@@ -92,6 +92,26 @@ def test_cli_does_not_accept_raw_password_argument(tmp_path: Path):
     assert exc.value.code == 2
 
 
+def test_cli_generate_rejects_short_length():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["generate", "--length", "11"])
+    assert exc.value.code == 2
+
+
+def test_cli_generate_rejects_all_character_classes_disabled():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(
+            [
+                "generate",
+                "--no-uppercase",
+                "--no-lowercase",
+                "--no-digits",
+                "--no-symbols",
+            ]
+        )
+    assert exc.value.code == 2
+
+
 def test_cli_generate_password(capsys):
     assert cli.main(["generate", "--length", "16", "--no-symbols"]) == 0
     password = capsys.readouterr().out.strip()
@@ -252,19 +272,13 @@ def test_cli_mutate_fails_when_write_lock_held(tmp_path: Path, monkeypatch, caps
     assert "locked by another writer" in capsys.readouterr().err.lower()
 
 
-def test_cli_search_empty_query_exits_one(tmp_path: Path, monkeypatch, capsys):
-    path = tmp_path / "vault.pwv"
-    set_getpass(monkeypatch, ["master password", "master password"])
-    assert cli.main(["--vault", str(path), "init"]) == 0
-
-    assert cli.main(["--vault", str(path), "search", ""]) == 1
-    assert "must not be empty" in capsys.readouterr().err
+def test_cli_search_empty_query_exits_two():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--vault", "vault.pwv", "search", ""])
+    assert exc.value.code == 2
 
 
-def test_cli_search_whitespace_query_exits_one(tmp_path: Path, monkeypatch, capsys):
-    path = tmp_path / "vault.pwv"
-    set_getpass(monkeypatch, ["master password", "master password"])
-    assert cli.main(["--vault", str(path), "init"]) == 0
-
-    assert cli.main(["--vault", str(path), "search", "   "]) == 1
-    assert "must not be empty" in capsys.readouterr().err
+def test_cli_search_whitespace_query_exits_two():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--vault", "vault.pwv", "search", "   "])
+    assert exc.value.code == 2
