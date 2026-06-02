@@ -12,11 +12,11 @@ from pathlib import Path
 from . import __version__
 from .errors import AmbiguousEntryError, VaultError
 from .generator import MIN_PASSWORD_LENGTH, generate_password
-
-logger = logging.getLogger(__name__)
 from .lockfile import WriteLock
 from .models import EntryCreate, EntrySummary, EntryUpdate
 from .vault import Vault
+
+logger = logging.getLogger(__name__)
 
 READ_ONLY_COMMANDS = frozenset({"list", "get", "search"})
 MUTATING_COMMANDS = frozenset({"add", "update", "delete"})

@@ -5,12 +5,19 @@
 #
 # CI validates this file on Python 3.12 (see .github/workflows/ci.yml).
 #
+build==1.5.0
+    # via pip-tools
 cffi==2.0.0
     # via cryptography
 cfgv==3.5.0
     # via pre-commit
+click==8.4.1
+    # via pip-tools
 colorama==0.4.6
-    # via pytest
+    # via
+    #   build
+    #   click
+    #   pytest
 coverage==7.14.1
     # via pytest-cov
 cryptography==44.0.3
@@ -36,9 +43,14 @@ mypy-extensions==1.1.0
 nodeenv==1.10.0
     # via pre-commit
 packaging==26.2
-    # via pytest
+    # via
+    #   build
+    #   pytest
+    #   wheel
 pathspec==1.1.1
     # via mypy
+pip-tools==7.5.3
+    # via -r requirements-dev.txt
 platformdirs==4.10.0
     # via
     #   python-discovery
@@ -53,6 +65,10 @@ pycparser==3.0
     # via cffi
 pygments==2.20.0
     # via pytest
+pyproject-hooks==1.2.0
+    # via
+    #   build
+    #   pip-tools
 pytest==8.4.2
     # via
     #   -r requirements-dev.txt
@@ -71,3 +87,9 @@ typing-extensions==4.15.0
     # via mypy
 virtualenv==21.4.2
     # via pre-commit
+wheel==0.47.0
+    # via pip-tools
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools

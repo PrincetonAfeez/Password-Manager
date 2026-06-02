@@ -76,7 +76,9 @@ def test_generate_from_args_defaults():
 def test_updates_from_args_conflicts():
     parser = cli.build_parser()
     with pytest.raises(SystemExit) as exc:
-        parser.parse_args(["--vault", "v.pwv", "update", "entry", "--password-prompt", "--generate"])
+        parser.parse_args(
+            ["--vault", "v.pwv", "update", "entry", "--password-prompt", "--generate"]
+        )
     assert exc.value.code == 2
 
 
